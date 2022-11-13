@@ -6,11 +6,13 @@
 #include <unordered_map>
 #include <set>
 #include <unordered_set>
-#include "AVLTree.cpp"
-//#include "AVLTree2.h"
+#include "graceAVL/AVLTree.cpp"
+//#include "jjAVL/AVLTree2.h"
 #include <stdlib.h>
 #include <queue>
 using namespace std;
+//NOTE: I'm thinking instead of a red black tree, we should create a priority_queue<int> maxHeap from scratch and sort it based off the frequency of words -->
+//that would be an interesting comparison 
 
 void stdHashTable();
 void gracesAVL();
@@ -87,7 +89,8 @@ vector<string> split(string str, char seperator) {
 
 int main() 
 {
-	stdHashTable();
+	//stdHashTable();
+	gracesAVL();
 }
 
 void gracesAVL()
@@ -96,7 +99,6 @@ void gracesAVL()
 	string text = "";
 	Node* root = new Node("test", do_hash("test"), 0.0);
 	AVLTree* tree = new AVLTree(root);
-	//AVLTree2* tree = new AVLTree2();
 
 	int stopper = 333333;
 	int counter = 0;
@@ -104,39 +106,25 @@ void gracesAVL()
 	//only takes about 2.5 seconds to insert everything for avl tree 
 	while (getline(wordlist, text) && counter < stopper) {
 		temp = split(text, ',');
-		//cout << temp[0] << " " << temp[1] << endl;
 		tree->insert(temp[0], do_hash(temp[0]), stod(temp[1]));
 		counter++;
 	}
 
-	tree->printLevelCount();
-
-	//string test = "This is a pooorly spelked sentrnce";
 	string test = "i reallly like fruitd and sciencee";
 	
 	cout << test << endl;
 	vector<string> sentence = split(test, ' ');
 
-	vector<string> misspelled;
-	for(int x = 0; x < sentence.size(); x++)
+	//this for loop takes the longest here, not the inserting of the tree above --> my tree search takes forever for some reason, idk why 
+	//probably because I did it iteratively using a queue instead of recursively 
+	for (string word : sentence) 
 	{
-		if(!tree->search(do_hash(sentence.at(x))))
-			misspelled.push_back(sentence.at(x));
-	}
-	cout << "number of misspelled words: " << misspelled.size() << endl;
-
-	for(int x = 0; x < misspelled.size(); x++)
-	{
-		cout << misspelled.at(x) << endl;
-	}
-	//this for loop takes the longest here, not the inserting of the tree above 
-	for (string word : sentence) {
 		set<string> scram = scramble(word);
-		unordered_map<string, double> valid = {};
+		map<double, string> valid = {};
 		// Check which permutations exist in dictionary
 		for (string i : scram) {
 			if (tree->search(do_hash(i))) {
-				valid.emplace(i, tree->search(do_hash(i))->freq);
+				valid.emplace(tree->search(do_hash(i))->freq, i);
 			}
 		}
 		// Print based on which valid permutation has highest frequency
@@ -148,38 +136,28 @@ void gracesAVL()
 			// If original word exists in dictionary, grabs its frequency too
 			if (tree->search(do_hash(word))) {
 				double max = tree->search(do_hash(word))->freq;
-				//cout << max << endl;
 				original = max;
 			}
-			// Iterates naively to find max freq permutation
-			for (auto const& x : valid) {
-				if (x.second > max) {
-					max = x.second;
-					print = x.first;
-				}
-			}
-			// If the premutation with max freq is 100 times more
-			// common than the original word, replace it
-			// Otherwise just print the original word
-			if (original != 0.0 && max / original > 100) 
+
+			vector<string> topThree;
+			auto iter = valid.end();
+			iter--;
+			while(topThree.size() != 3 && iter != valid.begin())
 			{
-				//
-			} 
-			else if (original != 0.0) 
-			{
-				print = word;
+					topThree.push_back(iter->second);
+					iter--;
 			}
-			cout << print;
-			
-		} 
-		else 
-		{
-			cout << word;
+
+			cout << "Did you mean these words for " << '"' << word << '"' << "?" << endl;
+			for(int x = 1; x <= topThree.size(); x++)
+			{
+				cout << x << ".) " << topThree.at(x - 1) << endl;
+			}
+			cout << endl;
 		}
-		cout << " ";
 	}
 
-	delete tree;
+	tree->destruct();
 	wordlist.close();   
 }
 
@@ -253,3 +231,44 @@ void stdHashTable()
 		}
 	}
 }
+
+
+/*
+if (!valid.empty()) 
+		{
+			string print = word;
+			double max = 0.0;
+			double original = 0.0;
+			// If original word exists in dictionary, grabs its frequency too
+			if (tree->search(do_hash(word))) {
+				double max = tree->search(do_hash(word))->freq;
+				//cout << max << endl;
+				original = max;
+			}
+			// Iterates naively to find max freq permutation
+			for (auto const& x : valid) {
+				if (x.second > max) {
+					max = x.second;
+					print = x.first;
+				}
+			}
+			// If the premutation with max freq is 100 times more
+			// common than the original word, replace it
+			// Otherwise just print the original word
+			if (original != 0.0 && max / original > 100) 
+			{
+				//
+			} 
+			else if (original != 0.0) 
+			{
+				print = word;
+			}
+			cout << print;
+			
+		} 
+		else 
+		{
+			cout << word;
+		}
+		cout << " ";
+*/

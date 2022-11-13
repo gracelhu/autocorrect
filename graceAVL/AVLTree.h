@@ -53,6 +53,7 @@ class AVLTree
     void adjustAllNodeHeights(Node* node);
     void remove(int ID);
     Node* search(int ID);
+    Node* searchHelper(Node* node, int ID);
     Node* search(string NAME);
     void printInorder();
     void printPreorder();

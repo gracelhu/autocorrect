@@ -423,36 +423,30 @@ void AVLTree::removeIDHelper2(Node* current)
     delete inorderSuccessor;
 }
 
+//make this faster
 Node* AVLTree::search(int ID)
 {
-    if(root == NULL)
-    {        
-        //cout << "unsuccessful" << endl;
-		return nullptr;
-    }
+    searchHelper(root, ID);
+}
 
-    queue<Node*> queue;
-    queue.push(root);
-
-    while(!queue.empty())
+Node* AVLTree::searchHelper(Node* node, int ID)
+{
+    if(node == nullptr)
     {
-        int size = queue.size();
-        for(int x = 0; x < size; x++)
-        {
-            Node* frontElement = queue.front();
-            if(frontElement->ID == ID)
-            {
-                //cout << frontElement->NAME << endl;
-				return frontElement;
-            }
-            queue.pop();
-            if(frontElement->left != NULL)
-                queue.push(frontElement->left);
-            if(frontElement->right != NULL)
-                queue.push(frontElement->right);
-        }
+        return nullptr;
     }
-	return nullptr;
+    else if(node->ID == ID)
+    {
+        return node;
+    }
+    else if(ID < node->ID)
+    {
+        return searchHelper(node->left, ID);
+    }
+    else if(ID > node->ID)
+    {
+        return searchHelper(node->right, ID);
+    }
 }
 
 Node* AVLTree::search(string NAME)
