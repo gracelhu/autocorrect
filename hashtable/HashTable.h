@@ -12,7 +12,10 @@ struct Word {
     Word(string word, int frequency);
 };
 
-//Collision Resolution Strategy: seperate chaining 
+/* 
+Collision Resolution Strategy: seperate chaining 
+For hashing using separate chaining method, the load factor should be maintained as 1. For open addressing method, it should not exceed 0.5.
+*/
 class HashTable {
     private:
 

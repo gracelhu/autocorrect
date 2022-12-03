@@ -5,12 +5,11 @@
 #include <cctype> 
 #include <sstream>
 
-Node::Node(string NAME, int ID, double freq)
+Node::Node(string NAME, double freq)
 {
     this->NAME = NAME;
-    this->ID = ID;
+    this->freq = freq;
     this->height = 1;
-	this->freq = freq;
     this->left = nullptr;
     this->right = nullptr;
     this->parent = nullptr;
@@ -35,28 +34,6 @@ bool AVLTree::isAVL(Node* root)
     return false;
 }
 
-void AVLTree::printHeights(Node* node)
-{
-    if(node == NULL)
-        return;
-    printHeights(node->left);
-    cout << node->height << " " << endl;
-    printHeights(node->right);
-}
-
-//Printing the parents of all the nodes inorder 
-void AVLTree::printParents(Node* node)
-{
-    if(node == NULL)
-        return;
-    printParents(node->left);
-    if(node->parent != NULL)
-        cout << node->parent->ID << " ";
-    else
-        cout << 0 << " ";
-    printParents(node->right);
-}
-
 void AVLTree::updateHeightsMinus(Node* node)
 {
     //any rotation will cause all parents of the node we're rotating about to decrease one in height 
@@ -77,7 +54,7 @@ void AVLTree::rotateLeft(Node* node)
     rightChild->left = node; 
     if(node->parent != NULL)
     {
-        if(node->parent->ID > node->ID)
+        if(node->parent->NAME > node->NAME)
             node->parent->left = rightChild;
         else
             node->parent->right = rightChild;
@@ -103,7 +80,7 @@ void AVLTree::rotateRight(Node* node)
     leftChild->right = node; 
     if(node->parent != NULL)
     {
-        if(node->parent->ID > node->ID)
+        if(node->parent->NAME > node->NAME)
             node->parent->left = leftChild;
         else
             node->parent->right = leftChild;
@@ -235,41 +212,33 @@ bool AVLTree::checkValidNode(string NAME, string ID)
         }
     }
 	return true;
-
-	/*
-    if(ID.length() == 8 && validName && validID)
-        return true;
-    else
-        return false; 
-	*/
 }
 
-void AVLTree::insert(string NAME, int ID, double freq)
+void AVLTree::insert(string NAME, double freq)
 {
     if(root == NULL) 
     {
-		root = new Node(NAME, ID, freq);
+		root = new Node(NAME, freq);
         return;
     }
     
     Node* parent = NULL;
     Node* current = root;
-	int IDnum = ID;
     while(current != NULL)
     {
         parent = current;
-        if(current->ID < IDnum)
+        if(current->NAME < NAME)
             current = current->right;
-        else if(current->ID > IDnum)
+        else if(current->NAME > NAME)
             current = current->left;
-        else if(current->ID == IDnum)
+        else if(current->NAME == NAME)
         {
             return;
         }
     }
 
-    Node* newNode = new Node(NAME, ID, freq);
-    if(parent->ID < IDnum)
+    Node* newNode = new Node(NAME, freq);
+    if(parent->NAME < NAME)
         parent->right = newNode;
     else
         parent->left = newNode;
@@ -300,279 +269,44 @@ int AVLTree::height(Node* node)
     return 1 + max(height(node->left), height(node->right));
 }
 
-
-void AVLTree::remove(int ID)
+Node* AVLTree::search(string NAME)
 {
-    if(root == NULL) 
-    {
-        cout << "unsuccessful" << endl; 
-        return; 
-    }
-
-    Node* current = root;
-    Node* parent = NULL;
-    while(current->ID != ID)
-    {
-        parent = current;
-        if(current->ID < ID)
-            current = current->right;
-        else if(current->ID > ID)
-            current = current->left;
-        if(current == NULL)
-        {
-            cout << "unsuccessful" << endl; 
-            return;
-        }
-    }
-
-    current->parent = parent;
-    //0 children case 
-    if(current->left == NULL && current->right == NULL)
-    {
-        removeIDHelper0(current);
-    }
-
-    //1 child case 
-    if(current->left != NULL && current->right == NULL || current->left == NULL && current->right != NULL)
-    {
-        removeIDHelper1(current);
-    }
-
-    //2 children case 
-    if(current->left != NULL && current->right != NULL)
-    {
-        removeIDHelper2(current);
-    }
-    
-    cout << "successful" << endl;
-
-    adjustAllNodeHeights(root);
+    searchHelper(root, NAME);
 }
 
-void AVLTree::removeIDHelper0(Node* current)
-{
-    if(current->parent != NULL)
-    {
-        if(current->ID < current->parent->ID)
-            current->parent->left = NULL;
-        else
-            current->parent->right = NULL;
-    }
-    else
-    {
-        //trying to delete root then, height adjustments here 
-        root = NULL;
-    }
-    delete current; 
-}
-
-void AVLTree::removeIDHelper1(Node* current)
-{
-    Node* onlyChild;
-    if(current->left != NULL)
-        onlyChild = current->left;
-    else
-        onlyChild = current->right;
-    
-    if(current->parent != NULL)
-    {
-        if(current->ID < current->parent->ID)
-            current->parent->left = onlyChild;
-        else
-            current->parent->right = onlyChild;
-        onlyChild->parent = current->parent;
-    }
-    else
-    {
-        //means the node we want to delete is the root 
-        root = onlyChild;
-        onlyChild->parent = NULL;
-    }
-    delete current;   
-}
-
-void AVLTree::removeIDHelper2(Node* current)
-{
-    Node* inorderSuccessor = current->right;
-    Node* inorderSuccessorParent = current;
-
-    //go as far left as possible
-    while(inorderSuccessor->left != NULL)
-    {
-        inorderSuccessorParent = inorderSuccessor;
-        inorderSuccessor = inorderSuccessor->left;
-    }
-    //Copy contents from inorderSuccessor to the node we want to delete 
-    current->ID = inorderSuccessor->ID;
-    current->NAME = inorderSuccessor->NAME;
-
-    if(inorderSuccessor->right != NULL)
-    {
-        if(inorderSuccessorParent->ID > inorderSuccessor->right->ID)
-            inorderSuccessorParent->left = inorderSuccessor->right;
-        else
-            inorderSuccessorParent->right = inorderSuccessor->right;
-    }
-    else
-    {
-        if(inorderSuccessorParent->ID > inorderSuccessor->ID)
-            inorderSuccessorParent->left = NULL;
-        else
-            inorderSuccessorParent->right = NULL;
-    }
-    delete inorderSuccessor;
-}
-
-//make this faster
-Node* AVLTree::search(int ID)
-{
-    searchHelper(root, ID);
-}
-
-Node* AVLTree::searchHelper(Node* node, int ID)
+Node* AVLTree::searchHelper(Node* node, string NAME)
 {
     if(node == nullptr)
     {
         return nullptr;
     }
-    else if(node->ID == ID)
+    else if(node->NAME == NAME)
     {
         return node;
     }
-    else if(ID < node->ID)
+    else if(NAME < node->NAME)
     {
-        return searchHelper(node->left, ID);
+        return searchHelper(node->left, NAME);
     }
-    else if(ID > node->ID)
+    else if(NAME > node->NAME)
     {
-        return searchHelper(node->right, ID);
-    }
-}
-
-Node* AVLTree::search(string NAME)
-{
-    bool nameFound = false;
-    if(root == nullptr)
-    {
-      // cout << "unsuccessful" << endl; 
-		return nullptr;
-    }
-    
-    stack<Node*> stack;
-    stack.push(root);
-    while(!stack.empty())
-    {
-        Node* preorderElement = stack.top();
-        stack.pop();
-        if(preorderElement->right != NULL)
-            stack.push(preorderElement->right);
-        if(preorderElement->left != NULL)
-        stack.push(preorderElement->left);
-
-        if(preorderElement->NAME == NAME)
-        {
-            //cout << preorderElement->ID << endl;
-            nameFound = true;
-			return preorderElement;
-        }
-    }
-	if (nameFound == false)
-		return nullptr;
-}
-
-void AVLTree::printInorder()
-{
-   vector<Node*> nodes;
-   inorderHelper(root, nodes);
-   for(int x = 0; x < nodes.size(); x++)
-   {
-        if(x != nodes.size() - 1)
-            cout << nodes.at(x)->NAME << ", ";
-        else
-            cout << nodes.at(x)->NAME << endl;
-   }
-}
-
-vector<int> AVLTree::inorder()
-{
-    vector<Node*> nodes;
-    inorderHelper(root, nodes);
-    vector<int> nodeIDs;
-    for(int x = 0; x < nodes.size(); x++)
-        nodeIDs.push_back(nodes.at(x)->ID);
-    return nodeIDs;
-}
-
-void AVLTree::printPreorder()
-{
-    vector<Node*> nodes;
-    preorderHelper(root, nodes);
-    for(int x = 0; x < nodes.size(); x++)
-    {
-        if(x != nodes.size() - 1)
-            cout << nodes.at(x)->NAME << ", ";
-        else
-            cout << nodes.at(x)->NAME << endl;
+        return searchHelper(node->right, NAME);
     }
 }
 
-vector<int> AVLTree::preorder()
+void AVLTree::destruct()
 {
-    vector<Node*> nodes;
-    preorderHelper(root, nodes);
-    vector<int> nodeIDs;
-    for(int x = 0; x < nodes.size(); x++)
-        nodeIDs.push_back(nodes.at(x)->ID);
-    return nodeIDs;
+    if(root != NULL)
+        destructHelper(root);
 }
 
-void AVLTree::printPostorder()
+void AVLTree::destructHelper(Node* root) 
 {
-    vector<Node*> nodes;
-    postorderHelper(root, nodes);
-    for(int x = 0; x < nodes.size(); x++)
-    {
-        if(x != nodes.size() - 1)
-            cout << nodes.at(x)->NAME << ", ";
-        else
-            cout << nodes.at(x)->NAME << endl;
-    }
-}
-
-void AVLTree::inorderHelper(Node* head, vector<Node*>& nodes)
-{
-    if(head == NULL)
-        return;
-    else
-    {
-        inorderHelper(head->left, nodes);
-        nodes.push_back(head);
-        inorderHelper(head->right, nodes);
-    }  
-}
-
-void AVLTree::preorderHelper(Node* head, vector<Node*>& nodes)
-{
-    if(head == NULL)
-        return;
-    else
-    {
-        nodes.push_back(head);
-        preorderHelper(head->left, nodes);
-        preorderHelper(head->right, nodes);
-    }
-}
-
-void AVLTree::postorderHelper(Node* head, vector<Node*>& nodes)
-{
-    if(head == NULL)
-        return;
-    else
-    {
-        postorderHelper(head->left, nodes);
-        postorderHelper(head->right, nodes);
-        nodes.push_back(head);
-    }
+    if (root->left) 
+        destructHelper(root->left);
+    if (root->right) 
+        destructHelper(root->right);
+    delete root;
 }
 
 void AVLTree::printLevelCount()
@@ -602,48 +336,53 @@ void AVLTree::printLevelCount()
     cout << numLevels << endl;
 }
 
-void AVLTree::removeInorder(int N)
+
+void AVLTree::printInorderWords()
 {
-    if(root == NULL)
-    {
-        cout << "unsuccessful" << endl;
+   vector<Node*> nodes;
+   inorderHelperWords(root, nodes);
+   for(int x = 0; x < nodes.size(); x++)
+   {
+        if(x != nodes.size() - 1)
+            cout << nodes.at(x)->NAME << ", ";
+        else
+            cout << nodes.at(x)->NAME << endl;
+   }
+}
+
+void AVLTree::inorderHelperWords(Node* head, vector<Node*>& nodes)
+{
+    if(head == NULL)
         return;
-    }
     else
     {
-        vector<Node*> inorderNodes;
-        removeInorderHelper(root, inorderNodes);
-        if(N >= inorderNodes.size())
-            cout << "unsuccessful" << endl;
+        inorderHelperWords(head->left, nodes);
+        nodes.push_back(head);
+        inorderHelperWords(head->right, nodes);
+    }  
+}
+
+void AVLTree::printInorderFreqs()
+{
+   vector<Node*> nodes;
+   inorderHelperFreqs(root, nodes);
+   for(int x = 0; x < nodes.size(); x++)
+   {
+        if(x != nodes.size() - 1)
+            cout << nodes.at(x)->freq << ", ";
         else
-        {
-            remove(inorderNodes.at(N)->ID);
-        }
-    }
-} 
+            cout << nodes.at(x)->freq << endl;
+   }
+}
 
-void AVLTree::removeInorderHelper(Node* node, vector<Node*>& inorderNodes)
+void AVLTree::inorderHelperFreqs(Node* head, vector<Node*>& nodes)
 {
-    if(node == NULL)
+    if(head == NULL)
         return;
-
-    removeInorderHelper(node->left, inorderNodes);
-    inorderNodes.push_back(node);
-    removeInorderHelper(node->right, inorderNodes); 
+    else
+    {
+        inorderHelperFreqs(head->left, nodes);
+        nodes.push_back(head);
+        inorderHelperFreqs(head->right, nodes);
+    }  
 }
-
-void AVLTree::destruct()
-{
-    if(root != NULL)
-        destructHelper(root);
-}
-
-void AVLTree::destructHelper(Node* root) 
-{
-    if (root->left) 
-        destructHelper(root->left);
-    if (root->right) 
-        destructHelper(root->right);
-    delete root;
-}
-

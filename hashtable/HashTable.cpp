@@ -118,7 +118,6 @@ Word* HashTable::find(string word)
 	return nullptr;
 }
 
-//doesn't work properly 
 void HashTable::deleteAllWords()
 {
 	//iterate through all the elements in the table 

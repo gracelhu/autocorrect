@@ -1,4 +1,3 @@
-//We should use graceAVL because it's faster --> this works just fine, just don't do individual deletes 
 #include <iostream>
 #include <string> 
 #include <vector>
