@@ -5,11 +5,11 @@ using namespace std;
 
 struct Word {
     string word;
-    int frequency;
+    double frequency;
     int hashCode;
     int index;
     Word* right;
-    Word(string word, int frequency);
+    Word(string word, double frequency);
 };
 
 /* 
@@ -20,7 +20,7 @@ class HashTable {
     private:
 
     public:
-    void insertWord(string word, int frequency);
+    void insertWord(string word, double frequency);
     void rehash();
     Word* find(string word);
     void deleteAllWords();

@@ -1,6 +1,6 @@
 #include "HashTable.h"
 
-Word::Word(string word, int frequency)
+Word::Word(string word, double frequency)
 {
     this->word = word;
     this->frequency = frequency;
@@ -20,7 +20,7 @@ int calculateHashCode(string word)
 	return (int)hash;
 }
 
-void HashTable::insertWord(string word, int frequency)
+void HashTable::insertWord(string word, double frequency)
 {
 	//add word into the table 
 	Word* newWord = new Word(word, frequency);
