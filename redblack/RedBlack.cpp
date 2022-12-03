@@ -6,10 +6,10 @@
 #include <sstream>
 
 using namespace std;
-Node::Node(string word, int frequency)
+Node::Node(string word, double freq)
 {
     this->word = word;
-    this->frequency = frequency;
+    this->freq = freq;
     this->height = 1;
     this->left = nullptr;
     this->right = nullptr;
@@ -130,13 +130,12 @@ void redBlack::rotateRightLeft(Node* node)
 }
 
 
-void redBlack::insert(string word, int frequency)
+void redBlack::insert(string word, double freq)
 {
-
-
+    //cout << "trying to insert: " << word << " " << freq << endl;
     if (root == NULL)
     {
-        root = new Node(word, frequency);
+        root = new Node(word, freq);
         root->red = false;
         return;
     }
@@ -157,7 +156,7 @@ void redBlack::insert(string word, int frequency)
         }
     }
     
-    Node* newNode = new Node(word,frequency);
+    Node* newNode = new Node(word,freq);
     newNode->red = true;
     if (parent->word < word) {
         parent->right = newNode;
@@ -236,32 +235,23 @@ void redBlack::printInorder()
 {
     vector<Node*> nodes;
     inorderHelper(root, nodes);
-    for (int x = 0; x < nodes.size(); x++)
+    /*for (int x = 0; x < nodes.size(); x++)
     {
         if (x != nodes.size() - 1)
             if (nodes.at(x)->red == true) {
-                std::cout << nodes.at(x)->word << " (red)" << ", ";
+                std::cout << nodes.at(x)->word << nodes.at(x)->freq << " " << " (red)" << ", ";
             }
             else
-                std::cout << nodes.at(x)->word << " (black)" << ", ";
+                std::cout << nodes.at(x)->word << nodes.at(x)->freq << " " << " (black)" << ", ";
         else
             if (nodes.at(x)->red == true) {
-                std::cout << nodes.at(x)->word << " (red)" << endl;
+                std::cout << nodes.at(x)->word << nodes.at(x)->freq << " " << " (red)" << endl;
             }
             else
-                std::cout << nodes.at(x)->word << " (black)" << endl;
-    }
+                std::cout << nodes.at(x)->word << nodes.at(x)->freq << " " << " (black)" << endl;
+    } */
+    cout << "Number of elements: " << nodes.size() << endl;
 }
-
-/*vector<int> redBlack::inorder()
-{
-    vector<Node*> nodes;
-    inorderHelper(root, nodes);
-    vector<int> nodeIDs;
-    for (int x = 0; x < nodes.size(); x++)
-        nodeIDs.push_back(nodes.at(x)->ID);
-    return nodeIDs;
-}*/
 
 void redBlack::printPreorder()
 {
@@ -275,16 +265,6 @@ void redBlack::printPreorder()
             std::cout << nodes.at(x)->word << endl;
     }
 }
-
-/*vector<int> redBlack::preorder()
-{
-    vector<Node*> nodes;
-    preorderHelper(root, nodes);
-    vector<int> nodeIDs;
-    for (int x = 0; x < nodes.size(); x++)
-        nodeIDs.push_back(nodes.at(x)->ID);
-    return nodeIDs;
-}*/
 
 void redBlack::printPostorder()
 {
@@ -361,80 +341,45 @@ void redBlack::printLevelCount()
     }
     std::cout << numLevels << endl;
 }
-int main() {
-    //redBlack* tree = new redBlack();
-    Node* root = new Node("b", 1000);
-    redBlack tree(root);
 
-    vector<string> Order;
-    vector<int> IDList;
-    vector<int> HeightList;
-    vector<int> idList;
-    string line;
-    //getline(cin, line);
-    //int count = stoi(line);
-    string firstCom;
-    string secondCom;
-    int firstIndex = 0;
-    int secondIndex = 0;
+//I don't think this works correctly :( 
+Node* redBlack::search(string word)
+{
+    searchHelper(root, word);
+}
 
-    tree.insert("a", 5);
-    tree.printInorder();
-    tree.insert("d", 5);
-    tree.printInorder();
-    tree.insert("e", 5);
-    tree.printInorder();
-    tree.insert("i", 5);
-    tree.printInorder();
-    tree.insert("c", 5);
-    tree.printInorder();
-    tree.insert("f", 5);
-    tree.printInorder();
-    tree.insert("g", 5);
-    tree.printInorder();
-    /*for (int i = 0; i < count; i++) {
-        getline(cin, line);
-        //std::cout << line.substr(0, 6) << endl;
-        //std::cout << line;
-        //std::cout << line << endl;
-        if (line.substr(0, 6) == "insert") {
-            //std::cout << "hi" << endl;
-            firstIndex = 1 + line.find('"');
-            firstCom = line.erase(0, firstIndex);
-            secondIndex = firstCom.find('"');
-            firstCom = line.substr(0, secondIndex);
-            //line = NAME at this point in time
-            //if line!=letters, return unsuccessful
-            //std::cout << "name is " << line << endl;
-            secondCom = line.substr(secondIndex + 2, line.size());
-            int frequency = stoi(secondCom);
-            //std::cout << "id " << id << endl;
-            //std::cout << "name " << firstCom << endl;
-
-            //if line!=8 numbers, return unsuccessful
-            //line = ID at this point in time, but is still in string format
-            //std::cout << "id is " << line;
-
-            //ONLY INSERT IF: name is string enclosed in quotes, ID is 8 digit integer
-
-                tree.insert(firstCom, frequency);
-                tree.printInorder();
-        }
-        //currently will not read this since there is no space after it.
-        else if (line == "printInorder") {
-            Order.clear();
-            tree.printInorder();
-        }
-        else if (line == "printPreorder") {
-            Order.clear();
-            tree.printPreorder();
-        }
-        else if (line == "printPostorder") {
-            Order.clear();
-            tree.printPostorder();
-        }
+Node* redBlack::searchHelper(Node* node, string word)
+{
+    if(node == nullptr)
+    {
+        return nullptr;
     }
+    else if(node->word == word)
+    {
+        //cout << "found it!" << endl;
+        return node;
+    }
+    else if(word < node->word)
+    {
+        return searchHelper(node->left, word);
+    }
+    else if(word > node->word)
+    {
+        return searchHelper(node->right, word);
+    }
+}
 
-    */
+void redBlack::destruct()
+{
+    if(root != NULL)
+        destructHelper(root);
+}
 
+void redBlack::destructHelper(Node* root) 
+{
+    if (root->left) 
+        destructHelper(root->left);
+    if (root->right) 
+        destructHelper(root->right);
+    delete root;
 }

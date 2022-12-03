@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <set>
 #include <unordered_set>
-#include "graceAVL/AVLTree.cpp"
+//#include "graceAVL/AVLTree.cpp"
 #include "hashtable/HashTable.cpp"
 #include "redblack/RedBlack.cpp"
 #include <stdlib.h>
@@ -74,84 +74,10 @@ vector<string> split(string str, char seperator) {
 
 int main() 
 {
-	//stdHashTable();
-	gracesAVL();
 	//graceHashTable();
+	iansRedBlack();
 }
 
-void gracesAVL()
-{
-	ifstream wordlist("freq.txt");
-	string text = "";
-	Node* root = new Node("test", 0.0);
-	AVLTree tree(root);
-
-	int stopper = 10;
-	int counter = 0;
-	vector<string> temp = {};
-	//only takes about 2.5 seconds to insert everything for avl tree 
-	while (getline(wordlist, text) && counter < stopper) {
-		temp = split(text, ',');
-		tree.insert(temp[0], stod(temp[1]));
-		counter++;
-	}
-
-	tree.printLevelCount();
-	tree.printInorderWords();
-	tree.printInorderFreqs();
-
-	string test = "i reallly like fruitd and sciencee";
-	
-	cout << test << endl;
-	vector<string> sentence = split(test, ' ');
-
-	for (string word : sentence) 
-	{
-		set<string> scram = scramble(word);
-		map<double, string> valid = {};
-		// Check which permutations exist in dictionary
-		for (string i : scram) {
-			if (tree.search(i)) {
-				//why is the tree node's name not initialized?? 
-				//cout << tree.search(i)->NAME << endl;
-				valid.emplace(tree.search(i)->freq, i);
-			}
-		}
-		cout << "valid size: " << valid.size() << endl;
-		// Print based on which valid permutation has highest frequency
-		if (!valid.empty()) 
-		{
-			string print = word;
-			double max = 0.0;
-			double original = 0.0;
-			// If original word exists in dictionary, grabs its frequency too
-			if (tree.search(word)) {
-				double max = tree.search(word)->freq;
-				original = max;
-			}
-
-			vector<string> topThree;
-			auto iter = valid.end();
-			iter--;
-			while(topThree.size() != 3 && iter != valid.begin())
-			{
-					topThree.push_back(iter->second);
-					iter--;
-			}
-
-			cout << "Did you mean these words for " << '"' << word << '"' << "?" << endl;
-			for(int x = 1; x <= topThree.size(); x++)
-			{
-				cout << x << ".) " << topThree.at(x - 1) << endl;
-			}
-			cout << endl;
-		}
-	}
-
-	//you need to do this and not just called delete tree because delete tree will only delete the root and not all the other nodes 
-	tree.destruct();
-	wordlist.close();   
-}
 
 void iansRedBlack()
 {
@@ -160,34 +86,38 @@ void iansRedBlack()
 	Node* root = new Node("test", 0.0);
 	redBlack tree(root);
 
-	int stopper = 10;
+	int stopper = 10000000;
 	int counter = 0;
 	vector<string> temp = {};
-	//only takes about 2.5 seconds to insert everything for avl tree 
+
 	while (getline(wordlist, text) && counter < stopper) {
 		temp = split(text, ',');
+		//cout << temp[0] << " " << stod(temp[1]) << endl;
+		//I don't think the frequency of the Node is getting intiailized correctly (every word has freq of -2147483648 right now)
 		tree.insert(temp[0], stod(temp[1]));
 		counter++;
 	}
 
-	tree.printLevelCount();
-	tree.printInorderWords();
-	tree.printInorderFreqs();
-
 	string test = "i reallly like fruitd and sciencee";
 	
 	cout << test << endl;
+	//cout << "Level Count: ";
+	//tree.printLevelCount();
+	tree.printInorder(); 
 	vector<string> sentence = split(test, ' ');
 
 	for (string word : sentence) 
 	{
 		set<string> scram = scramble(word);
+		cout << "scram size: " << scram.size() << endl;
 		map<double, string> valid = {};
 		// Check which permutations exist in dictionary
 		for (string i : scram) {
-			if (tree.search(i)) {
+			if (tree.search(i) != nullptr) {
 				//why is the tree node's name not initialized?? 
-				//cout << tree.search(i)->NAME << endl;
+				//cout << tree.search(i)->word << endl;
+				//cout << "found match" << endl;
+				//cout << tree.search(i)->word << " " << tree.search(i)->freq << endl;
 				valid.emplace(tree.search(i)->freq, i);
 			}
 		}

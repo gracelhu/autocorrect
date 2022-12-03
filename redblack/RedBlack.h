@@ -7,14 +7,14 @@ class Node
 {
 public:
     string word;
-    int frequency;
+    double freq;
     int height;
     Node* left;
     Node* right;
     Node* parent;
     bool red;
     bool validNameAndID;
-    Node(string NAME, int frequency);
+    Node(string NAME, double freq);
 };
 
 class redBlack
@@ -25,6 +25,8 @@ private:
     void inorderHelper(Node* head, vector<Node*>& nodes);
     void preorderHelper(Node* head, vector<Node*>& nodes);
     void postorderHelper(Node* head, vector<Node*>& nodes);
+    Node* searchHelper(Node* root, string word);
+    void destructHelper(Node* root);
 
     //Testing Method for debugging or unit tests 
     void printHeights(Node* node);
@@ -36,7 +38,7 @@ public:
     void rotateRight(Node* node);
     void rotateLeftRight(Node* node);
     void rotateRightLeft(Node* node);
-    void insert(string NAME, int frequency);
+    void insert(string word, double freq);
     void printInorder();
     void printPreorder();
     void printPostorder();
@@ -47,4 +49,6 @@ public:
     void check_3();
     void check_4();
     void fix_insert(Node* node);
+    Node* search(string word);
+    void destruct();
 };
