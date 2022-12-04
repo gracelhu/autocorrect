@@ -1,0 +1,2 @@
+	computer sciencew is the studyt of computatioon, automation, and infirmation. computer sciene spans theoretikal disciplimes to practical disciplinnes.
+	compter science is generaly considered an area of accademic research and dastinct from computer programing.

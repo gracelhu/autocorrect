@@ -6,10 +6,10 @@
 #include <sstream>
 
 using namespace std;
-Node::Node(string word, double freq)
+RBNode::RBNode(string word, int frequency)
 {
     this->word = word;
-    this->freq = freq;
+    this->frequency = frequency;
     this->height = 1;
     this->left = nullptr;
     this->right = nullptr;
@@ -18,7 +18,7 @@ Node::Node(string word, double freq)
     //is red
 }
 
-redBlack::redBlack(Node* root)
+redBlack::redBlack(RBNode* root)
 {
     this->root = root;
 }
@@ -35,7 +35,7 @@ void redBlack::check_3() {
 void redBlack::check_4() {
 
 }
-bool redBlack::isRedBlack(Node* root)
+bool redBlack::isRedBlack(RBNode* root)
 {
     if (root == nullptr)
         return true;
@@ -55,7 +55,7 @@ bool redBlack::isRedBlack(Node* root)
 }
 
 //Printing the parents of all the nodes inorder 
-void redBlack::printParents(Node* node)
+void redBlack::printParents(RBNode* node)
 {
     if (node == NULL)
         return;
@@ -67,9 +67,9 @@ void redBlack::printParents(Node* node)
     printParents(node->right);
 }
 
-void redBlack::rotateLeft(Node* node)
+void redBlack::rotateLeft(RBNode* node)
 {
-    Node* rightChild = node->right;
+    RBNode* rightChild = node->right;
     node->right = rightChild->left;
     if (rightChild->left != NULL)
         rightChild->left->parent = node;
@@ -92,9 +92,9 @@ void redBlack::rotateLeft(Node* node)
     }
 }
 
-void redBlack::rotateRight(Node* node)
+void redBlack::rotateRight(RBNode* node)
 {
-    Node* leftChild = node->left;
+    RBNode* leftChild = node->left;
     node->left = leftChild->right;
     if (leftChild->right != NULL)
         leftChild->right->parent = node;
@@ -117,31 +117,32 @@ void redBlack::rotateRight(Node* node)
 
 }
 
-void redBlack::rotateLeftRight(Node* node)
+void redBlack::rotateLeftRight(RBNode* node)
 {
     rotateLeft(node->left);
     rotateRight(node);
 }
 
-void redBlack::rotateRightLeft(Node* node)
+void redBlack::rotateRightLeft(RBNode* node)
 {
     rotateRight(node->right);
     rotateLeft(node);
 }
 
 
-void redBlack::insert(string word, double freq)
+void redBlack::insert(string word, int frequency)
 {
-    //cout << "trying to insert: " << word << " " << freq << endl;
+
+
     if (root == NULL)
     {
-        root = new Node(word, freq);
+        root = new RBNode(word, frequency);
         root->red = false;
         return;
     }
 
-    Node* parent = NULL;
-    Node* current = root;
+    RBNode* parent = NULL;
+    RBNode* current = root;
     string curWord = word;
     while (current != NULL)
     {
@@ -156,7 +157,7 @@ void redBlack::insert(string word, double freq)
         }
     }
     
-    Node* newNode = new Node(word,freq);
+    RBNode* newNode = new RBNode(word,frequency);
     newNode->red = true;
     if (parent->word < word) {
         parent->right = newNode;
@@ -169,14 +170,108 @@ void redBlack::insert(string word, double freq)
         //std::cout << parent->left->word << "<- word here ";
     }
     newNode->parent = parent;
-    
-    fix_insert(newNode);
+
+    /*
+    //if z's uncle is red, recolor parent, uncle, 
+
+    //THIS IS FOR UPPER LEFT UNCLE
+    if (parent->parent!=nullptr && parent->parent->left!=nullptr && parent->parent->right!=NULL && parent->parent!=NULL && parent->parent->right == parent) {
+        //upper left uncle is red
+        if (parent->parent->left->red == true) {
+            //uncle recolored
+            parent->parent->left->red = false;
+            //parent recolored
+            if (parent->red == true) {
+                parent->red = false;
+            }
+            else
+                parent->red = true;
+            
+            //grandparent recolored
+            if (parent->parent->red == true) {
+                parent->parent->red = false;
+            }
+            else
+                parent->parent->red = true;
+        }
+        //z's left uncle is black (triangle) 
+    //                  black                 
+    //         black            red 
+    //                     (Z) red   
+        if ((parent->parent->left->red == false|| parent->parent->left==nullptr) && parent->left == newNode) {
+            rotateRight(parent);
+        }
+    }
+
+    //z's left uncle is black (line)
+    if (parent->parent != NULL && parent->parent->left!=nullptr && parent->parent->right == parent && (parent->parent->left->red == false||parent->parent->left==nullptr) && parent->right == newNode) {
+        if (parent->red == true) {
+            parent->red = false;
+        }
+        else
+            parent->red = true;
+
+        //grandparent recolored
+        if (parent->parent->red == true) {
+            parent->parent->red = false;
+        }
+        else
+            parent->parent->red = true;
+        rotateLeft(parent->parent);
+    }
+
+    //THIS IS FOR UPPER RIGHT UNCLE
+    if (parent->parent != NULL && parent->parent->left == parent) {
+        if (parent->parent->right != NULL && parent->parent->right->red == true) {
+            //uncle recolored
+            parent->parent->right->red = false;
+            std::cout <<"im here! "<< endl;
+            //parent recolored
+            if (parent->red == true) {
+                parent->red = false;
+            }
+            else
+                parent->red = true;
+
+            //grandparent recolored
+            if (parent->parent->red == true) {
+                parent->parent->red = false;
+            }
+            else
+                parent->parent->red = true;
+        }
+        //z's right uncle is black (triangle) 
+        //          black
+        //    red            black
+        //       (Z) red
+        if ((parent->parent->right == nullptr || parent->parent->right->red == false) && parent->right == newNode) {
+            rotateLeft(parent);
+        }
+    }
+
+    //z's right uncle is black (line)
+    if (parent->parent!=NULL && parent->parent->left == parent && (parent->parent->right == NULL || parent->parent->right->red == false) && parent->left == newNode) {
+        if (parent->red == true) {
+            parent->red = false;
+        }
+        else
+            parent->red = true;
+
+        //grandparent recolored
+        if (parent->parent->red == true) {
+            parent->parent->red = false;
+        }
+        else
+            parent->parent->red = true;
+        rotateRight(parent->parent);
+    }*/
+        fix_insert(newNode);
 }
 
-void redBlack::fix_insert(Node* node) {
+void redBlack::fix_insert(RBNode* node) {
     while (node->parent && node->parent->red == true) {
         if (node->parent->parent!=nullptr && node->parent == node->parent->parent->left) {
-                Node* u = node->parent->parent->right;
+                RBNode* u = node->parent->parent->right;
                 //if right uncle is red
                 if (u!=nullptr&&u->red == true) {
                     node->parent->red = false;
@@ -198,7 +293,7 @@ void redBlack::fix_insert(Node* node) {
             }
         else {
             if (node->parent->parent != nullptr) {
-                Node* u = node->parent->parent->left;
+                RBNode* u = node->parent->parent->left;
                 //if left uncle is red
                 if (u!=nullptr && u->red == true) {
                     node->parent->red = false;
@@ -233,29 +328,38 @@ void redBlack::fix_insert(Node* node) {
 
 void redBlack::printInorder()
 {
-    vector<Node*> nodes;
+    vector<RBNode*> nodes;
     inorderHelper(root, nodes);
-    /*for (int x = 0; x < nodes.size(); x++)
+    for (int x = 0; x < nodes.size(); x++)
     {
         if (x != nodes.size() - 1)
             if (nodes.at(x)->red == true) {
-                std::cout << nodes.at(x)->word << nodes.at(x)->freq << " " << " (red)" << ", ";
+                std::cout << nodes.at(x)->word << " (red)" << ", ";
             }
             else
-                std::cout << nodes.at(x)->word << nodes.at(x)->freq << " " << " (black)" << ", ";
+                std::cout << nodes.at(x)->word << " (black)" << ", ";
         else
             if (nodes.at(x)->red == true) {
-                std::cout << nodes.at(x)->word << nodes.at(x)->freq << " " << " (red)" << endl;
+                std::cout << nodes.at(x)->word << " (red)" << endl;
             }
             else
-                std::cout << nodes.at(x)->word << nodes.at(x)->freq << " " << " (black)" << endl;
-    } */
-    cout << "Number of elements: " << nodes.size() << endl;
+                std::cout << nodes.at(x)->word << " (black)" << endl;
+    }
 }
+
+/*vector<int> redBlack::inorder()
+{
+    vector<Node*> nodes;
+    inorderHelper(root, nodes);
+    vector<int> nodeIDs;
+    for (int x = 0; x < nodes.size(); x++)
+        nodeIDs.push_back(nodes.at(x)->ID);
+    return nodeIDs;
+}*/
 
 void redBlack::printPreorder()
 {
-    vector<Node*> nodes;
+    vector<RBNode*> nodes;
     preorderHelper(root, nodes);
     for (int x = 0; x < nodes.size(); x++)
     {
@@ -266,9 +370,19 @@ void redBlack::printPreorder()
     }
 }
 
-void redBlack::printPostorder()
+/*vector<int> redBlack::preorder()
 {
     vector<Node*> nodes;
+    preorderHelper(root, nodes);
+    vector<int> nodeIDs;
+    for (int x = 0; x < nodes.size(); x++)
+        nodeIDs.push_back(nodes.at(x)->ID);
+    return nodeIDs;
+}*/
+
+void redBlack::printPostorder()
+{
+    vector<RBNode*> nodes;
     postorderHelper(root, nodes);
     for (int x = 0; x < nodes.size(); x++)
     {
@@ -279,7 +393,7 @@ void redBlack::printPostorder()
     }
 }
 
-void redBlack::inorderHelper(Node* head, vector<Node*>& nodes)
+void redBlack::inorderHelper(RBNode* head, vector<RBNode*>& nodes)
 {
     if (head == NULL)
         return;
@@ -291,7 +405,7 @@ void redBlack::inorderHelper(Node* head, vector<Node*>& nodes)
     }
 }
 
-void redBlack::preorderHelper(Node* head, vector<Node*>& nodes)
+void redBlack::preorderHelper(RBNode* head, vector<RBNode*>& nodes)
 {
     if (head == NULL)
         return;
@@ -303,7 +417,7 @@ void redBlack::preorderHelper(Node* head, vector<Node*>& nodes)
     }
 }
 
-void redBlack::postorderHelper(Node* head, vector<Node*>& nodes)
+void redBlack::postorderHelper(RBNode* head, vector<RBNode*>& nodes)
 {
     if (head == NULL)
         return;
@@ -324,7 +438,7 @@ void redBlack::printLevelCount()
     }
 
     int numLevels = 0;
-    queue<Node*> queue;
+    queue<RBNode*> queue;
     queue.push(this->root);
     while (!queue.empty())
     {
@@ -342,13 +456,12 @@ void redBlack::printLevelCount()
     std::cout << numLevels << endl;
 }
 
-//I don't think this works correctly :( 
-Node* redBlack::search(string word)
+RBNode* redBlack::search(string word)
 {
-    searchHelper(root, word);
+    return searchHelper(root, word);
 }
 
-Node* redBlack::searchHelper(Node* node, string word)
+RBNode* redBlack::searchHelper(RBNode* node, string word)
 {
     if(node == nullptr)
     {
@@ -369,17 +482,89 @@ Node* redBlack::searchHelper(Node* node, string word)
     }
 }
 
-void redBlack::destruct()
-{
-    if(root != NULL)
-        destructHelper(root);
-}
+/*int main() {
+    //redBlack* tree = new redBlack();
+    RBNode* root = new RBNode("b", 1000);
+    redBlack tree(root);
 
-void redBlack::destructHelper(Node* root) 
-{
-    if (root->left) 
-        destructHelper(root->left);
-    if (root->right) 
-        destructHelper(root->right);
-    delete root;
-}
+    vector<string> Order;
+    vector<int> IDList;
+    vector<int> HeightList;
+    vector<int> idList;
+    string line;
+    //getline(cin, line);
+    //int count = stoi(line);
+    string firstCom;
+    string secondCom;
+    int firstIndex = 0;
+    int secondIndex = 0;
+
+    tree.insert("a", 5);
+    tree.printInorder();
+    tree.insert("d", 5);
+    tree.printInorder();
+    tree.insert("e", 5);
+    tree.printInorder();
+    tree.insert("i", 5);
+    tree.printInorder();
+    tree.insert("c", 5);
+    tree.printInorder();
+    tree.insert("f", 5);
+    tree.printInorder();
+    tree.insert("g", 5);
+    tree.printInorder();
+
+    if(tree.search("f") != nullptr)
+    {
+        cout << "found it!" << endl;
+    }
+    else
+    {
+        cout << "doesn't exist" << endl;
+    }
+    for (int i = 0; i < count; i++) {
+        getline(cin, line);
+        //std::cout << line.substr(0, 6) << endl;
+        //std::cout << line;
+        //std::cout << line << endl;
+        if (line.substr(0, 6) == "insert") {
+            //std::cout << "hi" << endl;
+            firstIndex = 1 + line.find('"');
+            firstCom = line.erase(0, firstIndex);
+            secondIndex = firstCom.find('"');
+            firstCom = line.substr(0, secondIndex);
+            //line = NAME at this point in time
+            //if line!=letters, return unsuccessful
+            //std::cout << "name is " << line << endl;
+            secondCom = line.substr(secondIndex + 2, line.size());
+            int frequency = stoi(secondCom);
+            //std::cout << "id " << id << endl;
+            //std::cout << "name " << firstCom << endl;
+
+            //if line!=8 numbers, return unsuccessful
+            //line = ID at this point in time, but is still in string format
+            //std::cout << "id is " << line;
+
+            //ONLY INSERT IF: name is string enclosed in quotes, ID is 8 digit integer
+
+                tree.insert(firstCom, frequency);
+                tree.printInorder();
+        }
+        //currently will not read this since there is no space after it.
+        else if (line == "printInorder") {
+            Order.clear();
+            tree.printInorder();
+        }
+        else if (line == "printPreorder") {
+            Order.clear();
+            tree.printPreorder();
+        }
+        else if (line == "printPostorder") {
+            Order.clear();
+            tree.printPostorder();
+        }
+    }
+
+    
+
+} */

@@ -6,22 +6,36 @@
 #include <unordered_map>
 #include <set>
 #include <unordered_set>
-//#include "graceAVL/AVLTree.cpp"
+#include "graceAVL/AVLTree.cpp"
 #include "hashtable/HashTable.cpp"
 #include "redblack/RedBlack.cpp"
 #include <stdlib.h>
 #include <queue>
+#include <windows.h>
+#include <utility>
 using namespace std;
 
 void stdHashTable();
-void gracesAVL();
-void iansRedBlack();
-void graceHashTable();
+void gracesAVL(string userInput);
+void graceHashTable(string userInput);
+void iansRedBlack(string userInput);
+
+// Hash to convert string to int
+//LGTM
+int do_hash(string str) {
+	unsigned long hash = 5381;
+	int c;
+	for (auto& ch : str) {
+		hash = ((hash << 5) + hash) + ch;
+	}
+	return (int)hash;
+}
 
 // Generates the 4 types of permutations in the article
 set<string> scramble(string str) {
 	set<string> out = {};
 	// #1 insert = helo -> hello 
+	//LGTM 
 	for (int i = 0; i < str.length()+1; i++) {
 		for (int j = 0; j < 26; j++) {
 			//converts the ascii (j + 97) to a character and stores it in temp --> going through every letter of alphabet 
@@ -30,14 +44,17 @@ set<string> scramble(string str) {
 		}
 	}
 	// #2 remove = hellol -> hello
+	//LGTM 
 	for (int i = 0; i < str.length(); i++) {
 		out.insert(str.substr(0, i) + str.substr(i+1, str.length()));
 	}
 	// #3 exchange = hlelo -> hello
+	//LGTM 
 	for (int i = 0; i < str.length()-1; i++) {
 		out.insert(str.substr(0, i) + str.at(i+1) + str.at(i) + str.substr(i + 2, str.length()));
 	}
 	// #4 replace = helko -> hello
+	//LGTM 
 	for (int i = 0; i < str.length(); i++) {
 		for (int j = 0; j < 26; j++) {
 			char temp = (char)(j + 97);
@@ -48,8 +65,8 @@ set<string> scramble(string str) {
 }
 
 // Custom split() function  
-vector<string> split(string str, char seperator) {
-	vector<string> out = {};
+vector<pair<string, bool>> split(string str, char seperator) {
+	vector<pair<string, bool>> out = {};
 	int currIndex = 0, i = 0;
 	int startIndex = 0, endIndex = 0;
 	while (i <= str.length()) {
@@ -63,7 +80,7 @@ vector<string> split(string str, char seperator) {
 			{
 				subStr = subStr.substr(0, subStr.length() - 1);
 			}
-			out.push_back(subStr);
+			out.push_back(make_pair(subStr, false));
 			currIndex += 1;
 			startIndex = endIndex + 1;
 		}
@@ -74,54 +91,93 @@ vector<string> split(string str, char seperator) {
 
 int main() 
 {
-	//graceHashTable();
-	iansRedBlack();
+	/*
+	Sample user input to use:
+	computer sciencew is the studyt of computatioon, automation, and infirmation. computer sciene spans theoretikal disciplimes to practical disciplinnes.
+	compter science is generaly considered an area of accademic research and dastinct from computer programing.
+	*/
+  
+	string userInput;
+	int dataStructure;
+
+	cout << "Type in a sentence to be autocorrected: " << endl;
+	getline(cin, userInput);
+	cout << endl;
+	cout << "Would you like to use a red black tree (1) or hash table (2) to autocorrect?" << endl;
+	cin >> dataStructure;
+	cout << endl;
+
+	if(dataStructure == 1)
+	{
+		iansRedBlack(userInput);
+	}
+	if(dataStructure == 2)
+	{
+		graceHashTable(userInput);
+	}  
 }
 
-
-void iansRedBlack()
+void iansRedBlack(string userInput)
 {
 	ifstream wordlist("freq.txt");
 	string text = "";
-	Node* root = new Node("test", 0.0);
-	redBlack tree(root);
+	RBNode* root = new RBNode("test", 0.0);
+	redBlack* tree = new redBlack(root);
 
-	int stopper = 10000000;
+	int stopper = 333333;
 	int counter = 0;
-	vector<string> temp = {};
-
+	vector<pair<string, bool>> temp = {};
+	//only takes about 2.5 seconds to insert everything for avl tree 
 	while (getline(wordlist, text) && counter < stopper) {
 		temp = split(text, ',');
-		//cout << temp[0] << " " << stod(temp[1]) << endl;
-		//I don't think the frequency of the Node is getting intiailized correctly (every word has freq of -2147483648 right now)
-		tree.insert(temp[0], stod(temp[1]));
+		tree->insert(temp[0].first, stod(temp[1].first));
 		counter++;
 	}
 
-	string test = "i reallly like fruitd and sciencee";
-	
-	cout << test << endl;
-	//cout << "Level Count: ";
-	//tree.printLevelCount();
-	tree.printInorder(); 
-	vector<string> sentence = split(test, ' ');
+	//string test = "i reallly like fruitd and sciencee";
+	string test = userInput;
 
-	for (string word : sentence) 
+	vector<pair<string, bool>> sentence = split(test, ' ');
+	vector<pair<string, bool>> correctedSentence = sentence;
+
+	HANDLE hConsole;
+	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	//mark mispelled words bool variable as true + print out the user input with the mispelled ones in a different color :D 
+	for(int x = 0; x < sentence.size(); x++)
 	{
+		if(tree->search(sentence.at(x).first) == nullptr)
+		{
+			sentence.at(x).second = true;
+			SetConsoleTextAttribute(hConsole, 4); 
+			cout << sentence.at(x).first << " ";
+			SetConsoleTextAttribute(hConsole, 15); 
+		}
+		else
+		{
+			cout << sentence.at(x).first << " ";
+		}
+	}
+
+	cout << endl;
+	cout << endl;
+
+	for (int x = 0; x < sentence.size(); x++) 
+	{
+		//if the word is mispelled (doesn't exist in dictionary), try to correct it 
+		if(sentence.at(x).second == true)
+		{
+		string word = sentence.at(x).first;
+
 		set<string> scram = scramble(word);
-		cout << "scram size: " << scram.size() << endl;
 		map<double, string> valid = {};
 		// Check which permutations exist in dictionary
 		for (string i : scram) {
-			if (tree.search(i) != nullptr) {
-				//why is the tree node's name not initialized?? 
-				//cout << tree.search(i)->word << endl;
-				//cout << "found match" << endl;
-				//cout << tree.search(i)->word << " " << tree.search(i)->freq << endl;
-				valid.emplace(tree.search(i)->freq, i);
+			if (tree->search(i)) {
+				valid.emplace(tree->search(i)->frequency, i);
 			}
 		}
-		cout << "valid size: " << valid.size() << endl;
+
+		//cout << "valid size: " << valid.size() << endl;
 		// Print based on which valid permutation has highest frequency
 		if (!valid.empty()) 
 		{
@@ -129,8 +185,8 @@ void iansRedBlack()
 			double max = 0.0;
 			double original = 0.0;
 			// If original word exists in dictionary, grabs its frequency too
-			if (tree.search(word)) {
-				double max = tree.search(word)->freq;
+			if (tree->search(word)) {
+				double max = tree->search(word)->frequency;
 				original = max;
 			}
 
@@ -148,16 +204,46 @@ void iansRedBlack()
 			{
 				cout << x << ".) " << topThree.at(x - 1) << endl;
 			}
+			string yesOrNo;
 			cout << endl;
+			cout << "Y or N?" << endl;
+			cin >> yesOrNo;
+			
+			if(yesOrNo == "Y")
+			{
+				int option;
+				cout << "1 2 or 3?" << endl;
+				cin >> option;
+
+				correctedSentence.at(x) = make_pair(topThree.at(option - 1), false);
+			}
+			cout << endl; 
+		} 
 		}
 	}
 
+	cout << "Corrected sentence: " << endl;
+	for(int x = 0; x < correctedSentence.size(); x++)
+	{
+		if(correctedSentence.at(x).second == true)
+		{
+			SetConsoleTextAttribute(hConsole, 10); 
+			cout << correctedSentence.at(x).first << " ";
+			SetConsoleTextAttribute(hConsole, 15); 
+		}
+		else
+		{
+			cout << correctedSentence.at(x).first << " ";
+		}
+	} 
+
 	//you need to do this and not just called delete tree because delete tree will only delete the root and not all the other nodes 
-	tree.destruct();
+	//tree->destruct();
 	wordlist.close();   
+
 }
 
-void graceHashTable()
+void graceHashTable(string userInput)
 {
 	ifstream wordlist("freq.txt");
 	string text = "";
@@ -165,21 +251,47 @@ void graceHashTable()
 
 	int stopper = 333333;
 	int counter = 0;
-	vector<string> temp = {};
+	vector<pair<string, bool>> temp = {};
 
 	while (getline(wordlist, text) && counter < stopper) {
 		temp = split(text, ',');
-		table.insertWord(temp[0], stod(temp[1]));
+		table.insertWord(temp[0].first, stod(temp[1].first));
 		counter++;
 	}
 
-	string test = "i reallly like fruitd and sciencee";
+	//string test = "i reallly like fruitd and sciencee";
+	string test = userInput;
 	
-	cout << test << endl;
-	vector<string> sentence = split(test, ' ');
+	//string of pair represents the word, bool of pair represents if it's a mispelled word or not 
+	vector<pair<string, bool>> sentence = split(test, ' ');
+	vector<pair<string, bool>> correctedSentence = sentence;
 
-	for (string word : sentence) 
+	HANDLE hConsole;
+	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	for(int x = 0; x < sentence.size(); x++)
 	{
+		if(table.find(sentence.at(x).first) == nullptr)
+		{
+			sentence.at(x).second = true;
+			SetConsoleTextAttribute(hConsole, 4); 
+			cout << sentence.at(x).first << " ";
+			SetConsoleTextAttribute(hConsole, 15); 
+		}
+		else
+		{
+			cout << sentence.at(x).first << " ";
+		}
+	}
+
+	cout << endl;
+	cout << endl;
+
+	for (int x = 0; x < sentence.size(); x++) 
+	{
+		//only do this if the word is considered mispelled (not found in dictionary)
+		if(sentence.at(x).second == true)
+		{
+		string word = sentence.at(x).first;
 		set<string> scram = scramble(word);
 		map<double, string> valid = {};
 		// Check which permutations exist in dictionary
@@ -189,7 +301,6 @@ void graceHashTable()
 			}
 		}
 		
-		cout << "valid size: " << valid.size() << endl;
 		// Print based on which valid permutation has highest frequency
 		if (!valid.empty()) 
 		{
@@ -216,74 +327,41 @@ void graceHashTable()
 			{
 				cout << x << ".) " << topThree.at(x - 1) << endl;
 			}
+			string yesOrNo;
 			cout << endl;
+			cout << "Y or N?" << endl;
+			cin >> yesOrNo;
+			
+			if(yesOrNo == "Y")
+			{
+				int option;
+				cout << "1, 2, or 3?" << endl;
+				cin >> option;
+
+				correctedSentence.at(x) = make_pair(topThree.at(option - 1), true);
+			}
+			cout << endl; 
+		}
 		}
 	}
+
+	cout << "Corrected sentence: " << endl;
+	for(int x = 0; x < correctedSentence.size(); x++)
+	{
+		if(correctedSentence.at(x).second == true)
+		{
+			SetConsoleTextAttribute(hConsole, 10); 
+			cout << correctedSentence.at(x).first << " ";
+			SetConsoleTextAttribute(hConsole, 15); 
+		}
+		else
+		{
+			cout << correctedSentence.at(x).first << " ";
+		}
+	} 
+
 	//destruct table 
 	table.deleteAllWords();
 	wordlist.close();   
 
-}
-
-void stdHashTable()
-{
-	ifstream wordlist("freq.txt");
-	string text = "";
-	unordered_map<string, int> dictionary;
-
-	int stopper = 333333;
-	int counter = 0;
-	vector<string> temp = {};
-	//only takes about 2.3 seconds to insert everything for unordered_map (avl is only slightly slower)
-	while (getline(wordlist, text) && counter < stopper) {
-		temp = split(text, ',');
-		dictionary[temp.at(0)] = stod(temp.at(1));
-		counter++;
-	}
-
-	string test = "i reallly like fruitd and sciencee";
-
-	cout << test << endl;
-	vector<string> sentence = split(test, ' ');
-
-	for (string word : sentence) {
-		set<string> scram = scramble(word);
-		//sort ordered valid map in descending order instead of ascending order so I can just get the top 3 
-		map<double, string> valid = {};
-		// Check which permutations exist in dictionary
-		for (string i : scram) {
-			if (dictionary.find(i) != dictionary.end()) {
-				valid.emplace(dictionary[i], i);
-			}
-		}
-		
-		// Print based on which valid permutation has highest frequency
-		if (!valid.empty()) 
-		{
-			string print = word;
-			double max = 0.0;
-			double original = 0.0;
-			// If original word exists in dictionary, grabs its frequency too
-			if (dictionary.find(word) != dictionary.end()) {
-				double max = dictionary[word];
-				original = max;
-			}
-
-			vector<string> topThree;
-			auto iter = valid.end();
-			iter--;
-			while(topThree.size() != 3 && iter != valid.begin())
-			{
-					topThree.push_back(iter->second);
-					iter--;
-			}
-
-			cout << "Did you mean these words for " << '"' << word << '"' << "?" << endl;
-			for(int x = 1; x <= topThree.size(); x++)
-			{
-				cout << x << ".) " << topThree.at(x - 1) << endl;
-			}
-			cout << endl;
-		}
-	}
 }

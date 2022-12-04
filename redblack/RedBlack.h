@@ -1,54 +1,53 @@
+//We should use graceAVL because it's faster --> this works just fine, just don't do individual deletes 
 #include <iostream>
 #include <string> 
 #include <vector>
 using namespace std;
 
-class Node
+class RBNode
 {
 public:
     string word;
-    double freq;
+    int frequency;
     int height;
-    Node* left;
-    Node* right;
-    Node* parent;
+    RBNode* left;
+    RBNode* right;
+    RBNode* parent;
     bool red;
     bool validNameAndID;
-    Node(string NAME, double freq);
+    RBNode(string NAME, int frequency);
 };
 
 class redBlack
 {
 private:
-    Node* root;
+    RBNode* root;
     //My Helper Methods: helper methods are to help make methods easier to implement + read by using recursion 
-    void inorderHelper(Node* head, vector<Node*>& nodes);
-    void preorderHelper(Node* head, vector<Node*>& nodes);
-    void postorderHelper(Node* head, vector<Node*>& nodes);
-    Node* searchHelper(Node* root, string word);
-    void destructHelper(Node* root);
+    void inorderHelper(RBNode* head, vector<RBNode*>& nodes);
+    void preorderHelper(RBNode* head, vector<RBNode*>& nodes);
+    void postorderHelper(RBNode* head, vector<RBNode*>& nodes);
+    RBNode* searchHelper(RBNode* node, string word);
 
     //Testing Method for debugging or unit tests 
-    void printHeights(Node* node);
-    void printParents(Node* node);
+    void printHeights(RBNode* node);
+    void printParents(RBNode* node);
 
 public:
-    redBlack(Node* root);
-    void rotateLeft(Node* node);
-    void rotateRight(Node* node);
-    void rotateLeftRight(Node* node);
-    void rotateRightLeft(Node* node);
-    void insert(string word, double freq);
+    redBlack(RBNode* root);
+    void rotateLeft(RBNode* RBNode);
+    void rotateRight(RBNode* RBNode);
+    void rotateLeftRight(RBNode* RBNode);
+    void rotateRightLeft(RBNode* RBNode);
+    void insert(string NAME, int frequency);
     void printInorder();
     void printPreorder();
     void printPostorder();
     void printLevelCount();
-    bool isRedBlack(Node* root);
+    bool isRedBlack(RBNode* root);
     void check_1();
     void check_2();
     void check_3();
     void check_4();
-    void fix_insert(Node* node);
-    Node* search(string word);
-    void destruct();
+    void fix_insert(RBNode* node);
+    RBNode* search(string word);
 };
