@@ -28,7 +28,8 @@ class Autocorrector {
     void buildHashTable();
     bool search(string word);
 	void checkTypos();
-	set<string> scramble(string str);
+	string permute(string str);
+    set<string> scramble(string str);
 	vector<string> split(string str, char delimiter);
 	vector<string> split(string str, string delimiters);
 	vector<string> fixtypo(string word);

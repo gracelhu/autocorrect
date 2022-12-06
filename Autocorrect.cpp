@@ -6,360 +6,220 @@
 #include <unordered_map>
 #include <set>
 #include <unordered_set>
-#include "graceAVL/AVLTree.cpp"
-#include "hashtable/HashTable.cpp"
-#include "redblack/RedBlack.cpp"
+#include "Autocorrector/Autocorrector.cpp"
 #include <stdlib.h>
 #include <queue>
+#include <regex>
 #include <windows.h>
 #include <utility>
+#include <algorithm>
+#include <chrono>
+#include <ctime>
 using namespace std;
+using namespace std::chrono;
 
-void stdHashTable();
-void gracesAVL(string userInput);
-void graceHashTable(string userInput);
-void iansRedBlack(string userInput);
+int main() {
+	srand(time(nullptr));
+	Autocorrector redBlackAC = Autocorrector();
+	redBlackAC.buildRBtree();
+	Autocorrector hashTableAC = Autocorrector();
+	hashTableAC.buildHashTable();
+	HANDLE hConsole;
+	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-// Hash to convert string to int
-//LGTM
-int do_hash(string str) {
-	unsigned long hash = 5381;
-	int c;
-	for (auto& ch : str) {
-		hash = ((hash << 5) + hash) + ch;
+	//////////////////////////
+	// PART 1 - SAMPLE TEXT //
+	//////////////////////////
+
+	cout << endl << "PART 1: SAMPLE TEXT" << endl;
+
+	string sample = "";
+	string text = "";
+	ifstream excerpt("excerpt.txt");
+	while (getline(excerpt, text)) {
+		sample += text + "\n";
 	}
-	return (int)hash;
-}
+	excerpt.close();
+	string scram = sample;
+	for (int i = 0; i < 50; i++) {
+		scram = redBlackAC.permute(scram);
+	}
+	
+	cout << "Original sample (1984, George Orwell)" << endl;
+	cout << "---------------------" << endl;
+	cout << sample << endl << endl;
+	
+	cout << "Scrambled sample" << endl; // scrambled sample contains the typos 
+	cout << "---------------------" << endl;
+	//cout << scram << endl << endl;
+	
+	vector<string> split_sample = redBlackAC.split(scram, " .,()");
+	for (auto x : split_sample) {
+		//if the word is misspelled (doesn't exist in dictionary), color it RED
+		//search for the word lowercase version, and get rid of punctuation 
+		string editedX = x;
+		transform(editedX.begin(), editedX.end(), editedX.begin(), ::tolower);
+		regex purge("[.!,:]");
+		editedX = regex_replace(editedX, purge, "");
 
-// Generates the 4 types of permutations in the article
-set<string> scramble(string str) {
-	set<string> out = {};
-	// #1 insert = helo -> hello 
-	//LGTM 
-	for (int i = 0; i < str.length()+1; i++) {
-		for (int j = 0; j < 26; j++) {
-			//converts the ascii (j + 97) to a character and stores it in temp --> going through every letter of alphabet 
-			char temp = (char)(j + 97);
-			out.insert(str.substr(0, i) + temp + str.substr(i, str.length()));
+		if(redBlackAC.search(editedX) == false) {
+			SetConsoleTextAttribute(hConsole, 4);
+			cout << x;
+			SetConsoleTextAttribute(hConsole, 7);
+		} else {
+			cout << x;
 		}
 	}
-	// #2 remove = hellol -> hello
-	//LGTM 
-	for (int i = 0; i < str.length(); i++) {
-		out.insert(str.substr(0, i) + str.substr(i+1, str.length()));
-	}
-	// #3 exchange = hlelo -> hello
-	//LGTM 
-	for (int i = 0; i < str.length()-1; i++) {
-		out.insert(str.substr(0, i) + str.at(i+1) + str.at(i) + str.substr(i + 2, str.length()));
-	}
-	// #4 replace = helko -> hello
-	//LGTM 
-	for (int i = 0; i < str.length(); i++) {
-		for (int j = 0; j < 26; j++) {
-			char temp = (char)(j + 97);
-			out.insert(str.substr(0, i) + temp + str.substr(i+1, str.length()));
+	cout << endl << endl;
+	cout << "Autocorrected" << endl;
+	cout << "---------------------" << endl;
+
+	for (auto x : split_sample) {
+		string correctedWord = redBlackAC.fixtypo(x).at(0);	
+		//if the word was misspelled before (doesn't exist in dictionary), color it green 
+		string editedX = x;
+		transform(editedX.begin(), editedX.end(), editedX.begin(), ::tolower);
+		regex purge("[.!,:]");
+		editedX = regex_replace(editedX, purge, "");
+
+		if(redBlackAC.search(editedX) == false) {
+			SetConsoleTextAttribute(hConsole, 10);
+			cout << correctedWord;
+			SetConsoleTextAttribute(hConsole, 7);
+		} else {
+			cout << correctedWord;
 		}
 	}
-	return out;
-}
 
-// Custom split() function  
-vector<pair<string, bool>> split(string str, char seperator) {
-	vector<pair<string, bool>> out = {};
-	int currIndex = 0, i = 0;
-	int startIndex = 0, endIndex = 0;
-	while (i <= str.length()) {
-		if (str[i] == seperator || i == str.length()) {
-			endIndex = i;
-			string subStr = "";
-			subStr.append(str, startIndex, endIndex - startIndex);
+	cout << endl << endl << "Press enter to continue" << endl << endl ;
+	cin.ignore();
 
-			//Get rid of special characters like period (.) and exclamation point (!)
-			if(subStr.find("!") != 4294967295 || subStr.find(".") != 4294967295)
-			{
-				subStr = subStr.substr(0, subStr.length() - 1);
-			}
-			out.push_back(make_pair(subStr, false));
-			currIndex += 1;
-			startIndex = endIndex + 1;
+	//////////////////////////
+	// PART 2 - TYPO CORPUS //
+	//////////////////////////
+	cout << endl << endl << "PART 2: TYPO CORPUS" << endl;
+
+	map<string, string> typoBody;
+	cout << "Loading typo corpus..." << endl;
+	ifstream wordlist("typos.txt");
+	text = "";
+	string target_word = "";
+	int stopper = 40000;
+	int counter = 0;
+	//map<string, string> typo_body = {};
+	while (getline(wordlist, text) && counter < stopper) {
+		if (text.substr(0, 1) == "$") {
+			target_word = text.substr(1, text.length() - 1);
+		} else {
+			typoBody.emplace(text, target_word);
 		}
-		i++;
+		counter++;
 	}
-	return out;
-}
+	wordlist.close();
+	cout << "...Typo corpus loaded." << endl;
 
-int main() 
-{
-	/*
-	Sample user input to use:
-	computer sciencew is the studyt of computatioon, automation, and infirmation. computer sciene spans theoretikal disciplimes to practical disciplinnes.
-	compter science is generaly considered an area of accademic research and dastinct from computer programing.
-	*/
-  
+	cout << "Checking typos" << endl << endl;
+	
+	//For RB Tree 
+	cout << "Using Red Black Tree: " << endl;
+	float RBworked = 0;
+	auto RBstart = high_resolution_clock::now();
+	for (auto const& x : typoBody) {
+		string fix = redBlackAC.fixtypo(x.first).at(0);
+	}
+
+	auto RBstop = high_resolution_clock::now();
+	float RBtotal = (float)typoBody.size();
+	cout << "worked = " << RBworked << endl;
+	cout << "total = " << RBtotal << endl;
+	auto RBduration = duration_cast<seconds>(RBstop - RBstart);
+	cout << "success ratio = " << RBworked / RBtotal << endl;
+	cout << "Red black execution time = " << RBduration.count() << " s" << endl << endl;
+
+	//For Hash Table
+	cout << "Using Hash Table: " << endl;
+	float hashWorked = 0;
+	auto hashStart = high_resolution_clock::now();
+	for (auto const& x : typoBody) {
+		string fix = hashTableAC.fixtypo(x.first).at(0);
+		hashWorked += (fix == x.second);
+	}
+
+	auto hashStop = high_resolution_clock::now();
+	float hashTotal = (float)typoBody.size();
+	cout << "worked = " << hashWorked << endl;
+	cout << "total = " << hashTotal << endl;
+	auto hashDuration = duration_cast<seconds>(hashStop - hashStart);
+	cout << "success ratio = " << hashWorked / hashTotal << endl;
+	cout << "Hash table execution time = " << hashDuration.count() << " s" << endl << endl;
+
+	cout << endl << endl <<  "Press enter to continue" << endl << endl;
+	cin.ignore();
+
+	// PART 3 - INTERACTIVE
+
+	cout << endl << "PART 3: INTERACTIVE" << endl;
+
+	//fruitt
 	string userInput;
 	int dataStructure;
 
 	cout << "Type in a sentence to be autocorrected: " << endl;
 	getline(cin, userInput);
 	cout << endl;
-	cout << "Would you like to use a red black tree (1) or hash table (2) to autocorrect?" << endl;
-	cin >> dataStructure;
-	cout << endl;
 
-	if(dataStructure == 1)
-	{
-		iansRedBlack(userInput);
-	}
-	if(dataStructure == 2)
-	{
-		graceHashTable(userInput);
-	}  
-}
-
-void iansRedBlack(string userInput)
-{
-	ifstream wordlist("freq.txt");
-	string text = "";
-	RBNode* root = new RBNode("test", 0.0);
-	redBlack* tree = new redBlack(root);
-
-	int stopper = 333333;
-	int counter = 0;
-	vector<pair<string, bool>> temp = {};
-	//only takes about 2.5 seconds to insert everything for avl tree 
-	while (getline(wordlist, text) && counter < stopper) {
-		temp = split(text, ',');
-		tree->insert(temp[0].first, stod(temp[1].first));
-		counter++;
-	}
-
-	//string test = "i reallly like fruitd and sciencee";
-	string test = userInput;
-
-	vector<pair<string, bool>> sentence = split(test, ' ');
-	vector<pair<string, bool>> correctedSentence = sentence;
-
-	HANDLE hConsole;
-	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	//mark mispelled words bool variable as true + print out the user input with the mispelled ones in a different color :D 
-	for(int x = 0; x < sentence.size(); x++)
-	{
-		if(tree->search(sentence.at(x).first) == nullptr)
-		{
-			sentence.at(x).second = true;
-			SetConsoleTextAttribute(hConsole, 4); 
-			cout << sentence.at(x).first << " ";
-			SetConsoleTextAttribute(hConsole, 15); 
-		}
-		else
-		{
-			cout << sentence.at(x).first << " ";
-		}
-	}
-
-	cout << endl;
-	cout << endl;
-
-	for (int x = 0; x < sentence.size(); x++) 
-	{
-		if(sentence.at(x).second == true)
-		{
-		string word = sentence.at(x).first;
-
-		set<string> scram = scramble(word);
-		map<double, string> valid = {};
-		// Check which permutations exist in dictionary
-		for (string i : scram) {
-			if (tree->search(i)) {
-				valid.emplace(tree->search(i)->frequency, i);
-			}
-		}
-
-		// Print based on which valid permutation has highest frequency
-		if (!valid.empty()) 
-		{
-			string print = word;
-			double max = 0.0;
-			double original = 0.0;
-			// If original word exists in dictionary, grab its frequency too
-			if (tree->search(word)) {
-				double max = tree->search(word)->frequency;
-				original = max;
-			}
-			//cout << "valid size: " << valid.size() << endl;
-			vector<pair<string, int>> topThree;
-			auto iter = valid.end();
-			iter--;
-			while(topThree.size() != 3 && iter != valid.begin())
-			{
-					topThree.push_back(make_pair(iter->second, iter->first));
-					iter--;
-			}
-
-			cout << "Did you mean these words for " << '"' << word << '"' << "?" << endl;
-			for(int x = 1; x <= topThree.size(); x++)
-			{
-				cout << x << ".) " << topThree.at(x - 1).first << endl;
-			}
-			string yesOrNo;
-			cout << endl;
-			cout << "Y or N?" << endl;
-			cin >> yesOrNo;
-			
-			if(yesOrNo == "Y")
-			{
-				int option;
-				cout << "1 2 or 3?" << endl;
-				cin >> option;
-
-				correctedSentence.at(x) = make_pair(topThree.at(option - 1).first, true);
-			}
-			cout << endl; 
-		} 
-		}
-	}
-
-	cout << "Corrected sentence: " << endl;
-	for(int x = 0; x < correctedSentence.size(); x++)
-	{
-		if(correctedSentence.at(x).second == true)
-		{
-			SetConsoleTextAttribute(hConsole, 10); 
-			cout << correctedSentence.at(x).first << " ";
-			SetConsoleTextAttribute(hConsole, 15); 
-		}
-		else
-		{
-			cout << correctedSentence.at(x).first << " ";
-		}
-	} 
-
-	//you need to do this and not just called delete tree because delete tree will only delete the root and not all the other nodes 
-	//tree->destruct();
-	wordlist.close();   
-
-}
-
-void graceHashTable(string userInput)
-{
-	ifstream wordlist("freq.txt");
-	string text = "";
-	HashTable table;
-
-	int stopper = 333333;
-	int counter = 0;
-	vector<pair<string, bool>> temp = {};
-
-	while (getline(wordlist, text) && counter < stopper) {
-		temp = split(text, ',');
-		table.insertWord(temp[0].first, stod(temp[1].first));
-		counter++;
-	}
-
-	//string test = "i reallly like fruitd and sciencee";
-	string test = userInput;
+	vector<string> sentence = redBlackAC.split(userInput, " .,()");
+	vector<string> fix = {};
+	vector<string> fix_after = {};
 	
-	//string of pair represents the word, bool of pair represents if it's a mispelled word or not 
-	vector<pair<string, bool>> sentence = split(test, ' ');
-	vector<pair<string, bool>> correctedSentence = sentence;
-
-	HANDLE hConsole;
-	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	for(int x = 0; x < sentence.size(); x++)
-	{
-		if(table.find(sentence.at(x).first) == nullptr)
-		{
-			sentence.at(x).second = true;
-			SetConsoleTextAttribute(hConsole, 4); 
-			cout << sentence.at(x).first << " ";
-			SetConsoleTextAttribute(hConsole, 15); 
-		}
-		else
-		{
-			cout << sentence.at(x).first << " ";
+	// Iterates through sentence and colors words based on whether they have a valid replacement
+	for (auto it : sentence) {
+		vector<string> options = redBlackAC.fixtypo(it, 3);
+		if (options[0] == it) {
+			cout << it;
+		} else {
+			SetConsoleTextAttribute(hConsole, 12);
+			cout << it;
+			SetConsoleTextAttribute(hConsole, 7);
+			fix.push_back(it);
 		}
 	}
-
-	cout << endl;
 	cout << endl;
 
-	for (int x = 0; x < sentence.size(); x++) 
-	{
-		//only do this if the word is considered mispelled (not found in dictionary)
-		if(sentence.at(x).second == true)
-		{
-		string word = sentence.at(x).first;
-		set<string> scram = scramble(word);
-		map<double, string> valid = {};
-		// Check which permutations exist in dictionary
-		for (string i : scram) {
-			if (table.find(i)) {
-				valid.emplace(table.find(i)->frequency, i);
-			}
+	// Loops through the red words and queries the user for input
+	for (auto it : fix) {
+		cout << "Did you mean these words for " << '"' << it << '"' << "?" << endl;
+		vector<string> options = redBlackAC.fixtypo(it, 3);
+		for (int i = 0; i < options.size(); i++) {
+			cout << i+1 << ".) " << options[i] << endl;
 		}
+		int option;
+		cout << "1 2 or 3?" << endl;
+		cin >> option;
+
+		// Clamps input
+		option--;
+		if (option >= options.size()) {
+			option = options.size()-1;
+		} else if (option < 0) {
+			option = 0;
+		}
+
+		// Replaces word in original sentence with selected word
+		auto index = find(sentence.begin(), sentence.end(), it);
+		*index = options[option];
+		fix_after.push_back(options[option]);
+		cout << endl;
+	}
+
+	for (auto it : sentence) {
+		if (find(fix_after.begin(), fix_after.end(), it) != fix_after.end()) {
+			SetConsoleTextAttribute(hConsole, 10);
+			cout << it;
+			SetConsoleTextAttribute(hConsole, 7);
+		} else {
+			cout << it;
+		}
+	}
 		
-		// Print based on which valid permutation has highest frequency
-		if (!valid.empty()) 
-		{
-			string print = word;
-			double max = 0.0;
-			double original = 0.0;
-			// If original word exists in dictionary, grabs its frequency too
-			if (table.find(word)) {
-				double max = table.find(word)->frequency;
-				original = max;
-			}
-
-			vector<string> topThree;
-			auto iter = valid.end();
-			iter--;
-			while(topThree.size() != 3 && iter != valid.begin())
-			{
-					topThree.push_back(iter->second);
-					iter--;
-			}
-
-			cout << "Did you mean these words for " << '"' << word << '"' << "?" << endl;
-			for(int x = 1; x <= topThree.size(); x++)
-			{
-				cout << x << ".) " << topThree.at(x - 1) << endl;
-			}
-			string yesOrNo;
-			cout << endl;
-			cout << "Y or N?" << endl;
-			cin >> yesOrNo;
-			
-			if(yesOrNo == "Y")
-			{
-				int option;
-				cout << "1, 2, or 3?" << endl;
-				cin >> option;
-
-				correctedSentence.at(x) = make_pair(topThree.at(option - 1), true);
-			}
-			cout << endl; 
-		}
-		}
-	}
-
-	cout << "Corrected sentence: " << endl;
-	for(int x = 0; x < correctedSentence.size(); x++)
-	{
-		if(correctedSentence.at(x).second == true)
-		{
-			SetConsoleTextAttribute(hConsole, 10); 
-			cout << correctedSentence.at(x).first << " ";
-			SetConsoleTextAttribute(hConsole, 15); 
-		}
-		else
-		{
-			cout << correctedSentence.at(x).first << " ";
-		}
-	} 
-
-	//destruct table 
-	table.deleteAllWords();
-	wordlist.close();   
-
 }
