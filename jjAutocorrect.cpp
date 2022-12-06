@@ -22,12 +22,6 @@ using namespace std::chrono;
 #include <queue>
 #include <windows.h>
 #include <utility>
-#define STD_OUTPUT_HANDLE ((DWORD)-11)
-
-//void stdHashTable();
-//AVLTree gracesAVL();
-//void iansRedBlack();
-//void graceHashTable();
 
 string permute(string str) {
 	string out = "";
@@ -63,8 +57,12 @@ string permute(string str) {
 
 int main() {
 	srand(time(nullptr));
-	Autocorrector AC = Autocorrector();
-	AC.buildRBtree();
+	Autocorrector redBlackAC = Autocorrector();
+	redBlackAC.buildRBtree();
+	Autocorrector hashTableAC = Autocorrector();
+	hashTableAC.buildHashTable();
+	HANDLE hConsole;
+	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	
 	// PART 1 - SAMPLE TEXT
@@ -84,26 +82,62 @@ int main() {
 		scram = permute(scram);
 	}
 	
-	string print = "";
-	vector<string> split_sample = AC.split(scram, " .,()");
-	for (auto x : split_sample) {
-		print += AC.fixtypo(x).at(0);
-	}
 	cout << "Original sample (1984, George Orwell)" << endl;
 	cout << "---------------------" << endl;
 	cout << sample << endl << endl;
 	
-	cout << "Scrambled sample" << endl;
+	cout << "Scrambled sample" << endl; // scrambled sample contains the typos 
 	cout << "---------------------" << endl;
-	cout << scram << endl << endl;
+	//cout << scram << endl << endl;
+	
+	vector<string> split_sample = redBlackAC.split(scram, " .,()");
+	for (auto x : split_sample) {
+		//if the word is misspelled (doesn't exist in dictionary), color it RED
 
+		//search for the word lowercase version, and get rid of punctuation 
+		string editedX = x;
+		transform(editedX.begin(), editedX.end(), editedX.begin(), ::tolower);
+		regex purge("[.!,:]");
+		editedX = regex_replace(editedX, purge, "");
+
+		if(redBlackAC.search(editedX) == false)
+		{
+			SetConsoleTextAttribute(hConsole, 4);
+			cout << x;
+			SetConsoleTextAttribute(hConsole, 7);
+		}
+		else
+		{
+			cout << x;
+		}
+	}
+	cout << endl << endl;
 	cout << "Autocorrected" << endl;
 	cout << "---------------------" << endl; 
-	cout << print << endl << endl;
+	//cout << print << endl << endl;
+
+	for (auto x : split_sample) {
+		string correctedWord = redBlackAC.fixtypo(x).at(0);	
+		//if the word was misspelled before (doesn't exist in dictionary), color it green 
+		string editedX = x;
+		transform(editedX.begin(), editedX.end(), editedX.begin(), ::tolower);
+		regex purge("[.!,:]");
+		editedX = regex_replace(editedX, purge, "");
+
+		if(redBlackAC.search(editedX) == false)
+		{
+			SetConsoleTextAttribute(hConsole, 10);
+			cout << correctedWord;
+			SetConsoleTextAttribute(hConsole, 7);
+		}
+		else
+		{
+			cout << correctedWord;
+		}
+	} 
 
 	// PART 2 - TYPO CORPUS
-
-	cout << endl << "PART 2: TYPO CORPUS" << endl;
+	cout << endl << endl << "PART 2: TYPO CORPUS" << endl;
 
 	map<string, string> typoBody;
 	cout << "Loading typo corpus..." << endl;
@@ -124,23 +158,48 @@ int main() {
 	wordlist.close();
 	cout << "...Typo corpus loaded." << endl;
 
-	cout << "Checking typos" << endl;
-	float worked = 0;
-	auto start = high_resolution_clock::now();
+	cout << "Checking typos" << endl << endl;
+	
+	//For RB Tree 
+	cout << "Using Red Black Tree: " << endl;
+	float RBworked = 0;
+	auto RBstart = high_resolution_clock::now();
 	for (auto const& x : typoBody) {
-		string fix = AC.fixtypo(x.first).at(0);
-		worked += (fix == x.second);
+		string fix = redBlackAC.fixtypo(x.first).at(0);
+		RBworked += (fix == x.second);
 		if (fix == x.second) {
 			//cout << (to_string(fix == x.second) + ": " + x.first + " -> " + x.second + ", = " + fix) << endl;
 		}
 	}
-	auto stop = high_resolution_clock::now();
-	float total = (float)typoBody.size();
-	cout << "worked = " << worked << endl;
-	cout << "total = " << total << endl;
-	auto duration = duration_cast<seconds>(stop - start);
-	cout << "success ratio = " << worked / total << endl;
-	cout << "Red black execution time = " << duration.count() << " s" << endl;
+
+	auto RBstop = high_resolution_clock::now();
+	float RBtotal = (float)typoBody.size();
+	cout << "worked = " << RBworked << endl;
+	cout << "total = " << RBtotal << endl;
+	auto RBduration = duration_cast<seconds>(RBstop - RBstart);
+	cout << "success ratio = " << RBworked / RBtotal << endl;
+	cout << "Red black execution time = " << RBduration.count() << " s" << endl << endl;
+
+	//For Hash Table
+	cout << "Using Hash Table: " << endl;
+	float hashWorked = 0;
+	auto hashStart = high_resolution_clock::now();
+	for (auto const& x : typoBody) {
+		string fix = hashTableAC.fixtypo(x.first).at(0);
+		hashWorked += (fix == x.second);
+		if (fix == x.second) {
+			//cout << (to_string(fix == x.second) + ": " + x.first + " -> " + x.second + ", = " + fix) << endl;
+		}
+	}
+
+	auto hashStop = high_resolution_clock::now();
+	float hashTotal = (float)typoBody.size();
+	cout << "worked = " << hashWorked << endl;
+	cout << "total = " << hashTotal << endl;
+	auto hashDuration = duration_cast<seconds>(hashStop - hashStart);
+	cout << "success ratio = " << hashWorked / hashTotal << endl;
+	cout << "Hash table execution time = " << hashDuration.count() << " s" << endl << endl;
+
 	
 	// PART 3 - INTERACTIVE
 
@@ -154,15 +213,13 @@ int main() {
 	getline(cin, userInput);
 	cout << endl;
 
-	vector<string> sentence = AC.split(userInput, " .,()");
+	vector<string> sentence = redBlackAC.split(userInput, " .,()");
 	vector<string> fix = {};
 	vector<string> fix_after = {};
-	HANDLE hConsole;
-	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	
 	// Iterates through sentence and colors words based on whether they have a valid replacement
 	for (auto it : sentence) {
-		vector<string> options = AC.fixtypo(it, 3);
+		vector<string> options = redBlackAC.fixtypo(it, 3);
 		if (options[0] == it) {
 			cout << it;
 		} else {
@@ -177,7 +234,7 @@ int main() {
 	// Loops through the red words and queries the user for input
 	for (auto it : fix) {
 		cout << "Did you mean these words for " << '"' << it << '"' << "?" << endl;
-		vector<string> options = AC.fixtypo(it, 3);
+		vector<string> options = redBlackAC.fixtypo(it, 3);
 		for (int i = 0; i < options.size(); i++) {
 			cout << i+1 << ".) " << options[i] << endl;
 		}

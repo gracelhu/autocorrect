@@ -140,6 +140,25 @@ void Autocorrector::buildHashTable() {
     cout << "Finished building hash table" << endl;
 }
 
+bool Autocorrector::search(string word)
+{
+	if(isRB == true)
+	{
+		if(rbtree.search(word) != nullptr)
+			return true;
+		else
+			return false;
+	}
+	else if(isHash == true)
+	{
+		if(hashtable.find(word) != nullptr)
+			return true;
+		else
+			return false;
+	}
+	return false;
+}
+
 // Pair comparison
 struct Comp {
 	bool operator()(const pair<string, double>& s1, const pair<string, double>& s2) {

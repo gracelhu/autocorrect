@@ -26,6 +26,7 @@ class Autocorrector {
     Autocorrector();
     void buildRBtree();
     void buildHashTable();
+    bool search(string word);
 	void checkTypos();
 	set<string> scramble(string str);
 	vector<string> split(string str, char delimiter);
