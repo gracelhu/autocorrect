@@ -8,14 +8,14 @@ class RBNode
 {
 public:
     string word;
-    int frequency;
+    double frequency;
     int height;
     RBNode* left;
     RBNode* right;
     RBNode* parent;
     bool red;
     bool validNameAndID;
-    RBNode(string NAME, int frequency);
+    RBNode(string NAME, double frequency);
 };
 
 class redBlack

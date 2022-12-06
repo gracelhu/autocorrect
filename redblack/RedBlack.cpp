@@ -6,7 +6,7 @@
 #include <sstream>
 
 using namespace std;
-RBNode::RBNode(string word, int frequency)
+RBNode::RBNode(string word, double frequency)
 {
     this->word = word;
     this->frequency = frequency;
