@@ -163,7 +163,6 @@ void iansRedBlack(string userInput)
 
 	for (int x = 0; x < sentence.size(); x++) 
 	{
-		//if the word is mispelled (doesn't exist in dictionary), try to correct it 
 		if(sentence.at(x).second == true)
 		{
 		string word = sentence.at(x).first;
@@ -177,32 +176,31 @@ void iansRedBlack(string userInput)
 			}
 		}
 
-		//cout << "valid size: " << valid.size() << endl;
 		// Print based on which valid permutation has highest frequency
 		if (!valid.empty()) 
 		{
 			string print = word;
 			double max = 0.0;
 			double original = 0.0;
-			// If original word exists in dictionary, grabs its frequency too
+			// If original word exists in dictionary, grab its frequency too
 			if (tree->search(word)) {
 				double max = tree->search(word)->frequency;
 				original = max;
 			}
-
-			vector<string> topThree;
+			//cout << "valid size: " << valid.size() << endl;
+			vector<pair<string, int>> topThree;
 			auto iter = valid.end();
 			iter--;
 			while(topThree.size() != 3 && iter != valid.begin())
 			{
-					topThree.push_back(iter->second);
+					topThree.push_back(make_pair(iter->second, iter->first));
 					iter--;
 			}
 
 			cout << "Did you mean these words for " << '"' << word << '"' << "?" << endl;
 			for(int x = 1; x <= topThree.size(); x++)
 			{
-				cout << x << ".) " << topThree.at(x - 1) << endl;
+				cout << x << ".) " << topThree.at(x - 1).first << endl;
 			}
 			string yesOrNo;
 			cout << endl;
@@ -215,7 +213,7 @@ void iansRedBlack(string userInput)
 				cout << "1 2 or 3?" << endl;
 				cin >> option;
 
-				correctedSentence.at(x) = make_pair(topThree.at(option - 1), false);
+				correctedSentence.at(x) = make_pair(topThree.at(option - 1).first, true);
 			}
 			cout << endl; 
 		} 
